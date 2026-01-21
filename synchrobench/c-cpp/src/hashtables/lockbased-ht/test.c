@@ -42,7 +42,7 @@
 
 //size_t slab_pagesize;
 //struct slab_chain s;
-unsigned int maxhtlength;
+extern unsigned int maxhtlength;
 
 typedef struct barrier {
 	pthread_cond_t complete;
