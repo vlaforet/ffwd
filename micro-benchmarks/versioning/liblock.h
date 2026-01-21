@@ -70,7 +70,7 @@ struct id_manager {
 /*
  *  exported variables
  */
-struct id_manager                         id_manager;
+extern struct id_manager                  id_manager;
 extern struct topology*                   topology;
 extern __thread struct thread_descriptor  self;
 extern int                                liblock_start_server_threads_by_hand; /* default: 0 */
