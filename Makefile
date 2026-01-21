@@ -4,13 +4,13 @@ DIRS=liblock/ memcached/memcached-1.4.6-ffwd/ memcached/memcached-1.4.6-patched/
 
 .PHONY: liblock memcached splash2 phoenix
 
-all: create_bin liblock microbenchmarks memcached splash2 phoenix
+all: bin liblock microbenchmarks memcached splash2 phoenix
 
 liblock:
 	@echo "Compiling RCL's liblock library"
 	$(MAKE) -C liblock/
 
-microbenchmarks: fetch-n-add simplelist lazylist hashtable skiplist  versioning
+microbenchmarks: bin fetch-n-add simplelist lazylist hashtable skiplist  versioning
 	@echo "Compiling Micro-Benchmarks"
 
 fetch-n-add: liblock
@@ -90,7 +90,7 @@ splash2-liblock: liblock
 	cp splash2/splash2-liblock/splash2/codes/apps/raytrace/RAYTRACE bin/liblock-raytrace
 	cp splash2/splash2-liblock/splash2/codes/apps/radiosity/RADIOSITY bin/liblock-radiosity
 
-create_bin:
+bin:
 	mkdir -p bin
 
 ffwd-clean: memcached-ffwd-clean splash2-ffwd-clean
