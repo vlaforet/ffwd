@@ -43,6 +43,7 @@ CFLAGS += -fno-strict-aliasing
 CFLAGS += -I$(LIBLOCK_ROOT) -I$(LAZYLISTDIR)
 CFLAGS += -std=gnu89
 CFLAGS += -D_GNU_SOURCE
+CFLAGS += -I../../synchrobench/c-cpp/src/atomic_ops
 LDFLAGS += -lpthread -lnuma -lrt
 
 .PHONY:	all clean

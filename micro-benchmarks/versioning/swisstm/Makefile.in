@@ -2,7 +2,7 @@
 # installation specific dirs
 LIBPAPI_DIR = /home/dragojev/local64
 
-ATOMIC_OPS_INCLUDE = /home/dragojev/local/libatomicops/include/
+ATOMIC_OPS_INCLUDE = ../../../synchrobench/c-cpp/src/atomic_ops
 
 ########################################
 # set general variables
