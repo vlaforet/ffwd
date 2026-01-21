@@ -90,7 +90,7 @@ static int trylock_mcstp(struct liblock_impl* impl)
        else if (my_qnode->status == FAILED)
        {
            if (PAPI_get_real_usec() - impl->cs_start_time > MAX_CS_TIME)
-              pthread_yield();
+              sched_yield();
 
            my_qnode->last_lock = impl;
            return 0;
@@ -112,7 +112,7 @@ static int trylock_mcstp(struct liblock_impl* impl)
            }
 
            if (PAPI_get_real_usec() - impl->cs_start_time > MAX_CS_TIME)
-               pthread_yield();
+               sched_yield();
 
 // !
            my_qnode->last_lock = impl;

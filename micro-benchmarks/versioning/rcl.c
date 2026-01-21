@@ -389,7 +389,7 @@ static void* do_liblock_execute_operation(rcl)(liblock_lock_t* lock, void* (*pen
 
 		while(local_val_compare_and_swap(int, &impl->locked, 0, 1)) { /* one of my thread own the lock */
 			me->timestamp = server->timestamp;
-			pthread_yield();                          /* give a chance to one of our thread to release the lock */
+			sched_yield();                          /* give a chance to one of our thread to release the lock */
 		}
 
 		res = pending(val);
@@ -415,11 +415,11 @@ static void* do_liblock_execute_operation(rcl)(liblock_lock_t* lock, void* (*pen
 	}
 
 	while(req->pending) {
-		pthread_yield();
+		sched_yield();
 	}
 #else
 	while(req->pending) {
-		//pthread_yield();
+		//sched_yield();
         PAUSE();
 	}
 #endif
@@ -465,7 +465,7 @@ __attribute__ ((noinline)) static int servicing_loop_slow_path(struct server* se
 		//static int z=0; if(!(++z % 200000)) rclprintf(server, "servicing-loop::yield processor");
 		local_fetch_and_add(&server->nb_free_threads, 1);
 		if(time++ > 1000) {
-			pthread_yield(); /* all the threads are busy */
+			sched_yield(); /* all the threads are busy */
 			time = 0;
 		}
 		local_fetch_and_add(&server->nb_free_threads, -1);
@@ -1113,7 +1113,7 @@ static int do_liblock_cond_timedwait(rcl)(liblock_cond_t* cond, liblock_lock_t* 
 
 	while(local_val_compare_and_swap(int, &impl->locked, 0, 1)) { /* one of my thread own the lock */
 		me->timestamp = me->server->timestamp;
-		pthread_yield();                          /* give a chance to one of our thread to release the lock */
+		sched_yield();                          /* give a chance to one of our thread to release the lock */
 	}
 
 	//rclprintf(cur->server, "relected: me continue %p", me);

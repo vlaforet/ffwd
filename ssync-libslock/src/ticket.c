@@ -118,7 +118,7 @@ ticket_acquire(ticketlock_t* lock)
       if (distance > 20)
         {
 	  sched_yield();
-	  /* pthread_yield(); */
+	  /* sched_yield(); */
         }
     }
 
