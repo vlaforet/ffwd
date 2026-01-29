@@ -4,8 +4,11 @@
 #include <stdint.h>
 #include "macro.h"
 
+#ifndef NUM_SOCKETS
+#define NUM_SOCKETS 4
+#endif
+
 #define MAX_THREADS 128
-#define MAX_SOCK 4
 #define MAX_NUM_OF_SERVERS 4
 #define THREADS_PER_RESPONSE NCLIENTS 
 #define INDEX_DIFF 2
@@ -22,7 +25,7 @@ struct server_response
 } __attribute__((packed));
 
 struct server_set{
-	struct server_response* server_responses[MAX_SOCK * 4];
+	struct server_response* server_responses[NUM_SOCKETS * MAX_NUM_OF_SERVERS];
 };
 
 struct request{
@@ -47,10 +50,7 @@ struct ffwd_context {
 
 struct server_args{
 	int server_core;
-	struct request* chip0;
-	struct request* chip1;
-	struct request* chip2;
-	struct request* chip3;
+	struct request* chips[NUM_SOCKETS];
 	struct server_set* server_response;
 };
 
@@ -121,7 +121,7 @@ extern char* platform;
 extern volatile int num_of_server_launched;
 
 void ffwd_init();
-void launch_server(int);
+void launch_servers(int);
 void ffwd_shutdown();
 struct ffwd_context* ffwd_get_context();
 void ffwd_thread_create(pthread_t *thread, pthread_attr_t *client_attr, void *(* func) (void *),void* value);

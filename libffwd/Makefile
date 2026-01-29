@@ -20,7 +20,7 @@ all: ffwd_sample
 libffwd.o: libffwd.c ffwd.h
 	gcc $(CFLAGS) -Wall $(MCMODEL) -DT$(NPROC) -c -o libffwd.o libffwd.c $(LIBS);
 
-ffwd_sample: libffwd.o
+ffwd_sample: libffwd.o ffwd.h ffwd_sample.c
 	gcc $(CFLAGS) -DT$(NPROC) -o ffwd_sample libffwd.o ffwd_sample.c $(LIBS);
 
 clean:
