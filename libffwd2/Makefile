@@ -1,6 +1,6 @@
 SHELL = /bin/bash
 
-CFLAGS = -O3 -g
+CFLAGS += -O3 -g
 LIBS = -lnuma -lpthread -lrt
 MCMODEL = -mcmodel=large
 

@@ -1,6 +1,10 @@
+#ifdef FFWD_NO_PINNING
+#define _GNU_SOURCE
+#include <sched.h>
+#endif
+
 #include <stdlib.h>
 #include <assert.h>
-#include <stdint.h>
 #include <pthread.h>
 #include <stdatomic.h>
 #include <numa.h>
@@ -15,10 +19,12 @@ struct server_args *server_args[MAX_NUMBER_SERVERS];
 
 void move_to_core(int core_id)
 {
+#ifndef FFWD_NO_PINNING
   int num_cpu = numa_num_configured_cpus();
   struct bitmask *cpumask = numa_bitmask_alloc(num_cpu);
   numa_bitmask_setbit(cpumask, core_id);
   numa_sched_setaffinity(0, cpumask);
+#endif
 }
 
 uint64_t inline ffwd_exec(int server_id, ffwd_func_t function, uint64_t arg)
@@ -177,9 +183,15 @@ void ffwd_init_thread()
     return; // Already initialized
 
   int id = atomic_fetch_add(&thread_counter, 1);
-  int cpu_id = server_counter + id;
-  int numa_node = numa_node_of_cpu(cpu_id);
+  
+  int numa_node;
+#ifndef FFWD_NO_PINNING
+  int cpu_id = server_counter + (id % (numa_num_configured_cpus() - server_counter));
+  numa_node = numa_node_of_cpu(cpu_id);
   move_to_core(cpu_id);
+#else
+  numa_node = numa_node_of_cpu(sched_getcpu());
+#endif
 
   thread_context = (struct ffwd_context *)numa_alloc_onnode(sizeof(struct ffwd_context), numa_node);
   thread_context->id = id;

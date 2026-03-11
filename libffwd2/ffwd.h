@@ -1,6 +1,8 @@
 #ifndef FFWD_H
 #define FFWD_H
 
+#include <stdint.h>
+
 #if defined(__has_include)
 #if __has_include("platform_defs.h")
 #include "platform_defs.h"
