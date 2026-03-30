@@ -5,6 +5,7 @@
 
 #include <stdlib.h>
 #include <assert.h>
+#include <stdio.h>
 #include <pthread.h>
 #include <stdatomic.h>
 #include <numa.h>
@@ -17,15 +18,15 @@ _Atomic uint64_t server_counter = 0; // Atomic counter to assign unique server I
 pthread_t server_threads[MAX_NUMBER_SERVERS];
 struct server_args *server_args[MAX_NUMBER_SERVERS];
 
+#ifndef FFWD_NO_PINNING
 void move_to_core(int core_id)
 {
-#ifndef FFWD_NO_PINNING
   int num_cpu = numa_num_configured_cpus();
   struct bitmask *cpumask = numa_bitmask_alloc(num_cpu);
   numa_bitmask_setbit(cpumask, core_id);
   numa_sched_setaffinity(0, cpumask);
-#endif
 }
+#endif
 
 uint64_t inline ffwd_exec(int server_id, ffwd_func_t function, uint64_t arg)
 {
@@ -120,7 +121,18 @@ static inline uint64_t execute_req(struct ffwd_request *req)
 void *server_func(void *input)
 {
   struct server_args *me = (struct server_args *)input;
+
+#ifdef FFWD_SERVERS_FIFO
+  if (sched_setscheduler(0, SCHED_FIFO, &(struct sched_param){.sched_priority = 1}) == -1)
+  {
+    perror("sched_setscheduler SCHED_FIFO for FFWD server");
+    exit(EXIT_FAILURE);
+  }
+#endif
+
+#ifndef FFWD_NO_PINNING
   move_to_core(me->server_core);
+#endif
 
   uint64_t group_prev_flags[NUM_THREAD_GROUPS] = {0};
   struct ffwd_thread_group_response group_response[NUM_THREAD_GROUPS] = {0};
@@ -183,7 +195,6 @@ void ffwd_init_thread()
     return; // Already initialized
 
   int id = atomic_fetch_add(&thread_counter, 1);
-  
   int numa_node;
 #ifndef FFWD_NO_PINNING
   int cpu_id = server_counter + (id % (numa_num_configured_cpus() - server_counter));
