@@ -1,0 +1,3 @@
+#define CACHE_LINE_SIZE 128
+
+#define NUM_NUMA_NODES @num_numa_nodes@
