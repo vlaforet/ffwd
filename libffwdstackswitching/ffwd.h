@@ -21,11 +21,10 @@
 #define MAX_THREADS 128
 #endif
 
-typedef uint64_t (*ffwd_func_t)(uint64_t, uint64_t, uint64_t, uint64_t, uint64_t);
-
 void ffwd_init(int num_of_servers);
 void ffwd_init_thread();
 void ffwd_shutdown();
-uint64_t ffwd_exec(int server_id, ffwd_func_t function, uint64_t arg);
+void ffwd_lock(int server_id);
+void ffwd_unlock(int server_id);
 
 #endif

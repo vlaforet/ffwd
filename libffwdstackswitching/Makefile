@@ -1,6 +1,6 @@
 SHELL = /bin/bash
 
-CFLAGS += -O3 -g
+CFLAGS += -O3 -ggdb
 LIBS = -lnuma -lpthread -lrt
 MCMODEL = -mcmodel=large
 
@@ -12,17 +12,23 @@ MCMODEL = -mcmodel=large
 # STC : socket-filling
 # CTS (default case) : core-filling
 
-all: libffwd.o
+all: libffwd.a
 
 platform_defs.h: platform_defs.h.in
 	cat $< | sed -e "s/@num_numa_nodes@/$$(awk -F- '{print $$2-$$1+1}' /sys/devices/system/node/online)/g" > $@
 
 # -S -fverbose-asm
-libffwd.o: ffwd.c ffwd.h platform_defs.h ffwd_internals.h
-	gcc $(CFLAGS) -Wall $(MCMODEL) -c -o libffwd.o ffwd.c $(LIBS);
+ffwd.o: ffwd.c ffwd.h platform_defs.h ffwd_internals.h
+	gcc $(CFLAGS) -Wall $(MCMODEL) -c -o ffwd.o ffwd.c
 
-ffwd_sample: libffwd.o ffwd.h ffwd_sample.c
-	gcc $(CFLAGS) -o ffwd_sample libffwd.o ffwd_sample.c $(LIBS);
+ffwd_asm.o: ffwd_asm.S ffwd.h platform_defs.h ffwd_internals.h
+	gcc $(CFLAGS) -Wall $(MCMODEL) -c -o ffwd_asm.o ffwd_asm.S
+
+libffwd.a: ffwd.o ffwd_asm.o
+	ar rcs $@ $^
+
+ffwd_sample: libffwd.a ffwd.h ffwd_sample.c
+	gcc $(CFLAGS) -o $@ ffwd_sample.c libffwd.a $(LIBS)
 
 clean:
-	rm -f platform_defs.h libffwd.o ffwd_sample
+	rm -f platform_defs.h libffwd.a *.o ffwd_sample

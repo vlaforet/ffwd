@@ -12,9 +12,7 @@ struct ffwd_request
     struct
     {
       uint64_t flag;
-      uint32_t argc;
-      ffwd_func_t fptr;
-      uint64_t argv[5];
+      void **rsp;
     };
     uint8_t padding[CACHE_LINE_SIZE];
   };
@@ -30,10 +28,13 @@ struct ffwd_thread_group_response
 } __attribute__((aligned(CACHE_LINE_SIZE)));
 
 #define NUM_THREAD_GROUPS ((MAX_THREADS + NUM_THREADS_PER_GROUP - 1) / NUM_THREADS_PER_GROUP)
-struct server_args
+struct ffwd_server_context
 {
   volatile int stop;
   int server_core;
+  void *server_rsp;
+  struct ffwd_request *current_req;
+
   struct ffwd_request *requests[NUM_NUMA_NODES][MAX_THREADS];
   struct ffwd_thread_group_response responses[NUM_NUMA_NODES][NUM_THREAD_GROUPS];
 };
@@ -44,14 +45,25 @@ struct ffwd_context
   {
     struct
     {
-
       int id;
       uint64_t mask;
       struct ffwd_request requests[MAX_NUMBER_SERVERS];
       struct ffwd_thread_group_response *responses[MAX_NUMBER_SERVERS];
+
+      void *rsp;
+      void *volatile local_shadow_stack_ptr;
     };
     uint8_t padding[CACHE_LINE_SIZE];
   };
 } __attribute__((aligned(CACHE_LINE_SIZE)));
+
+extern void call_on_stack(
+    void **old_sp_slot,
+    void **new_sp_slot,
+    void (*fn)(int),
+    int arg);
+
+extern void context_switch(void **incoming_rsp_ptr,
+                           void **outgoing_rsp_ptr);
 
 #endif

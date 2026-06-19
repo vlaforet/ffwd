@@ -29,12 +29,6 @@ static volatile int stop;
 volatile char dummy[128] __attribute__((aligned(128)));
 volatile int variable[1024 * 32] __attribute__((aligned(128))) = {0};
 
-uint64_t increment(int a)
-{
-	variable[a]++;
-	return variable[a];
-}
-
 void *client(void *input_data)
 {
 	data *mydata = (data *)input_data;
@@ -43,7 +37,6 @@ void *client(void *input_data)
 	ffwd_init_thread();
 
 	int i, j;
-	uint64_t return_value; // this is going to hold the function return value from ffwd_exec
 
 	unsigned long randno = rand();
 	int index_to_increment;
@@ -52,7 +45,11 @@ void *client(void *input_data)
 	while (stop == 0)
 	{
 		index_to_increment = (randno % servers);
-		return_value = ffwd_exec(index_to_increment % servers, (ffwd_func_t)&increment, (index_to_increment * 128));
+
+		ffwd_lock(index_to_increment % servers);
+		variable[index_to_increment * 128]++;
+		ffwd_unlock(index_to_increment % servers);
+
 		randno = ((randno + MULTIPLIER) % MAX);
 
 		mydata->ops++;
