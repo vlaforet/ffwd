@@ -1,13 +1,11 @@
 .text
-.globl call_on_stack
-.type call_on_stack, @function
+.globl ffwd_send_request
+.type ffwd_send_request, @function
 
-call_on_stack:
+ffwd_send_request:
     # Arguments:
     # rdi = old_sp_slot
     # rsi = new_sp_slot
-    # rdx = fn
-    # rcx = arg
 
     pushq %rbp
     pushq %rbx
@@ -15,21 +13,24 @@ call_on_stack:
     pushq %r13
     pushq %r14
     pushq %r15
+    pushq $1                # Request flag set to 1 (request)
 
-    movq %rdi, %r12        # r12 = old_sp_slot
-    movq %rsi, %r13        # r13 = new_sp_slot
-    movq %rdx, %r14        # r14 = fn
-    movl %ecx, %r15d       # r15d = arg
+    movq %rdi, %r12         # r12 = old_sp_slot
 
-    movq %rsp, (%r12)      # *old_sp_slot = old rsp
-    movq (%r13), %rsp      # rsp = *new_sp_slot
+    movq %rsp, (%r12)       # *old_sp_slot = old rsp
+    movq (%rsi), %rsp       # rsp = *new_sp_slot
 
-    movl %r15d, %edi       # server_id -> first arg
-    call *%r14             # fn(server_id)
+.Lwait_request_completed:
+    movq (%r12), %rax       # Dereference old_sp_slot pointer once
+    cmpq $0, (%rax)         # Check if request flag is 0 (**old_sp_slot == 0)
+    je .Lrequest_completed
+    pause                   # Hint to the CPU that we are in a spin-wait loop
+    jmp .Lwait_request_completed
 
-    movq %rsp, (%r13)      # *new_sp_slot = current shadow rsp
-    movq (%r12), %rsp      # restore old rsp
+.Lrequest_completed:
+    movq (%r12), %rsp       # restore old rsp
 
+    addq $8, %rsp           # skip the request flag
     popq %r15
     popq %r14
     popq %r13
@@ -39,7 +40,7 @@ call_on_stack:
 
     ret
 
-.size call_on_stack, .-call_on_stack
+.size ffwd_send_request, .-ffwd_send_request
 
 .text
 
@@ -65,10 +66,12 @@ context_switch:
     pushq %r13
     pushq %r14
     pushq %r15
+    pushq $0            # Request flag set to 0 (no request / request completed)
 
-    movq %rsp, (%rsi)      # *outgoing_rsp_ptr = rsp
-    movq (%rdi), %rsp      # rsp = *incoming_rsp_ptr
+    movq %rsp, (%rsi)   # *outgoing_rsp_ptr = rsp
+    movq (%rdi), %rsp   # rsp = *incoming_rsp_ptr
 
+    addq $8, %rsp       # skip request flag.
     popq %r15
     popq %r14
     popq %r13
