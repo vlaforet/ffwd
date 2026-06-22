@@ -53,7 +53,7 @@ void ffwd_lock(int server_id)
   // assert(thread_context != NULL);
 
   struct ffwd_request *req = &thread_context->requests[server_id];
-  ffwd_send_request(&req->rsp, (void *)&thread_context->local_shadow_stack_ptr);
+  ffwd_send_request(&req->rsp, (void **)&thread_context->local_shadow_stack_ptr);
 }
 
 void ffwd_unlock(int server_id)
