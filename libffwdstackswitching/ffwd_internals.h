@@ -22,7 +22,9 @@ struct ffwd_server_context
   volatile int stop;
   int server_core;
   void *server_rsp;
-  struct ffwd_request *current_req;
+
+  int current_numa_node;
+  int current_thread_id;
 
   struct ffwd_request *requests[NUM_NUMA_NODES][MAX_THREADS];
 };

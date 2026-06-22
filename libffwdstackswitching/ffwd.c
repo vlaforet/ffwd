@@ -20,6 +20,23 @@ _Atomic uint64_t server_counter = 0; // Atomic counter to assign unique server I
 pthread_t server_threads[MAX_NUMBER_SERVERS];
 struct ffwd_server_context *ffwd_server_context[MAX_NUMBER_SERVERS];
 
+static inline int request_is_pending(struct ffwd_request *req)
+{
+  return req && req->rsp && *(uint64_t *)req->rsp == 1247079108; // Check if the request flag is set to the magic value (request)
+}
+
+static inline void advance_server_cursor(struct ffwd_server_context *ctx)
+{
+  ctx->current_thread_id++;
+  if (ctx->current_thread_id == MAX_THREADS)
+  {
+    ctx->current_thread_id = 0;
+    ctx->current_numa_node++;
+    if (ctx->current_numa_node == NUM_NUMA_NODES)
+      ctx->current_numa_node = 0;
+  }
+}
+
 #ifndef FFWD_NO_PINNING
 void move_to_core(int core_id)
 {
@@ -43,7 +60,7 @@ void ffwd_unlock(int server_id)
 {
   // assert(server_context != NULL);
 
-  context_switch(&server_context->server_rsp, &server_context->current_req->rsp);
+  context_switch(&server_context->server_rsp, &server_context->requests[server_context->current_numa_node][server_context->current_thread_id]->rsp);
 }
 
 void *server_func(void *input)
@@ -62,18 +79,20 @@ void *server_func(void *input)
   move_to_core(server_context->server_core);
 #endif
 
-  int i, numa_node;
+  server_context->current_thread_id = 0;
+  server_context->current_numa_node = 0;
+
+  struct ffwd_request *curr_req = NULL;
   while (!server_context->stop)
   {
-    for (numa_node = 0; numa_node < NUM_NUMA_NODES; numa_node++)
+    curr_req = server_context->requests[server_context->current_numa_node][server_context->current_thread_id];
+    if (request_is_pending(curr_req))
     {
-      for (i = 0; i < MAX_THREADS; i++)
-      {
-        server_context->current_req = server_context->requests[numa_node][i];
-        if (server_context->current_req && server_context->current_req->rsp && *(uint64_t *)server_context->current_req->rsp == 1247079108)
-          context_switch(&server_context->current_req->rsp, &server_context->server_rsp);
-      }
+      // printf("Server context switch\n");
+      context_switch(&curr_req->rsp, &server_context->server_rsp);
     }
+
+    advance_server_cursor(server_context);
   }
 
   return NULL;
