@@ -13,7 +13,7 @@ ffwd_send_request:
     pushq %r13
     pushq %r14
     pushq %r15
-    pushq $1                # Request flag set to 1 (request)
+    pushq $1247079108       # Request flag set to magic value (request)
 
     movq %rdi, %r12         # r12 = old_sp_slot
 

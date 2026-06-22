@@ -70,7 +70,7 @@ void *server_func(void *input)
       for (i = 0; i < MAX_THREADS; i++)
       {
         server_context->current_req = server_context->requests[numa_node][i];
-        if (server_context->current_req && server_context->current_req->rsp && *(uint64_t *)server_context->current_req->rsp)
+        if (server_context->current_req && server_context->current_req->rsp && *(uint64_t *)server_context->current_req->rsp == 1247079108)
           context_switch(&server_context->current_req->rsp, &server_context->server_rsp);
       }
     }
