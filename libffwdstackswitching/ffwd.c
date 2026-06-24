@@ -60,7 +60,26 @@ void ffwd_unlock(int server_id)
 {
   // assert(server_context != NULL);
 
-  context_switch(&server_context->server_rsp, &server_context->requests[server_context->current_numa_node][server_context->current_thread_id]->rsp);
+  struct ffwd_request *curr_req = server_context->requests[server_context->current_numa_node][server_context->current_thread_id];
+  struct ffwd_request *next_req = NULL;
+
+  for (int i = 0; i < NUM_NUMA_NODES * MAX_THREADS - 1; i++)
+  {
+    advance_server_cursor(server_context);
+
+    next_req = server_context->requests[server_context->current_numa_node][server_context->current_thread_id];
+    if (request_is_pending(next_req))
+    {
+      context_switch(&next_req->rsp, &curr_req->rsp);
+      goto reset;
+    }
+  }
+
+  // Go back to server context to wait for new requests
+  context_switch(&server_context->server_rsp, &curr_req->rsp);
+
+reset:
+  thread_context->requests[server_id].rsp = NULL;
 }
 
 void *server_func(void *input)
