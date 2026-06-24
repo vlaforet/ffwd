@@ -163,5 +163,10 @@ void ffwd_init_thread()
 
 void ffwd_shutdown()
 {
-  // Shutdown all servers
+  for (int i = 0; i < server_counter; i++)
+  {
+    ffwd_server_context[i]->stop = 1;
+    pthread_join(server_threads[i], NULL);
+    numa_free(ffwd_server_context[i], sizeof(struct ffwd_server_context));
+  }
 }
