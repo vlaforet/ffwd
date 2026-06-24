@@ -142,6 +142,12 @@ void ffwd_init_thread()
     return; // Already initialized
 
   int id = atomic_fetch_add(&thread_counter, 1);
+  if (id >= MAX_THREADS)
+  {
+    fprintf(stderr, "Exceeded maximum number of FFWD threads: %d\n", MAX_THREADS);
+    exit(EXIT_FAILURE);
+  }
+
   int numa_node;
 #ifndef FFWD_NO_PINNING
   int cpu_id = server_counter + (id % (numa_num_configured_cpus() - server_counter));
