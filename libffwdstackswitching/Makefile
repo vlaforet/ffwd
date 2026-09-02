@@ -12,7 +12,7 @@ MCMODEL = -mcmodel=large
 # STC : socket-filling
 # CTS (default case) : core-filling
 
-all: libffwd.a
+all: libffwd.o
 
 platform_defs.h: platform_defs.h.in
 	cat $< | sed -e "s/@num_numa_nodes@/$$(awk -F- '{print $$2-$$1+1}' /sys/devices/system/node/online)/g" > $@
@@ -27,8 +27,11 @@ ffwd_asm.o: ffwd_asm.S ffwd.h platform_defs.h ffwd_internals.h
 libffwd.a: ffwd.o ffwd_asm.o
 	ar rcs $@ $^
 
-ffwd_sample: libffwd.a ffwd.h ffwd_sample.c
-	gcc $(CFLAGS) -o $@ ffwd_sample.c libffwd.a $(LIBS)
+libffwd.o: ffwd.o ffwd_asm.o
+	ld -r -o $@ $^
+
+ffwd_sample: libffwd.o ffwd.h ffwd_sample.c
+	gcc $(CFLAGS) -o $@ ffwd_sample.c libffwd.o $(LIBS)
 
 clean:
 	rm -f platform_defs.h libffwd.a *.o ffwd_sample
